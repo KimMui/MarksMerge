@@ -36,6 +36,9 @@ struct gb_cport {
     int id;
     int protocol;
     int device_id;
+#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
+    int bundle;
+#endif
 };
 
 struct manifest_file {

@@ -112,6 +112,22 @@ struct svc_interface_device_id {
 #define DSI_APB1_CPORT           (16)
 #define DSI_APB2_CPORT           (16)
 
+
+#ifdef CONFIG_ARA_DUAL_I2S_PORTS
+#define DEMO_I2S_MGMT_APB1_CPORT_1 (4)
+#define DEMO_I2S_MGMT_APB2_CPORT_1 (9)
+#define DEMO_I2S_RX_APB1_CPORT_1   (5)
+#define DEMO_I2S_RX_APB2_CPORT_1   (10)
+#endif
+
+#ifdef CONFIG_ARA_STREAM_FROM_APB3_TO_APB2
+#define DEV_ID_APB3             (3)
+
+#define DEMO_I2S_MGMT_APB3_CPORT_1 (4)
+#define DEMO_I2S_RX_APB3_CPORT_1   (5)
+#endif
+
+
 /* Interface name to deviceID mapping table */
 static struct svc_interface_device_id devid[] = {
     { "apb1", DEV_ID_APB1 },

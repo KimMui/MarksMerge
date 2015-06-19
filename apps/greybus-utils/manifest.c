@@ -68,7 +68,6 @@ static int g_device_id;
 void foreach_manifest(manifest_handler handler)
 {
     int i = 0;
-    gb_debug("===>\n");
     for (i = 0; i < ARRAY_SIZE(manifest_files); i++)
         handler(manifest_files[i].bin, manifest_files[i].id, i);
 }
@@ -237,16 +236,13 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size,
         break;
     case GREYBUS_TYPE_CPORT:
         expected_size += sizeof(struct greybus_descriptor_cport);
+#ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
+        // *.nmfs might have bundle other than 0, we only handle the one with bundle set to 0.
         if (desc->cport.bundle != 0)
         	break;
+#endif
         if (desc_size >= expected_size) {
-            gb_error("=1=%d, %d\n", desc->cport.id, desc->cport.bundle);
-//#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
             if (!release) {
-//#else
-            // *.nmfs might have bundle other than 0, we only handle the one with bundle set to 0.
-            //if (!release && !desc->cport.bundle) {
-//#endif
             	cport = alloc_cport();
                 cport->id = desc->cport.id;
                 cport->protocol = desc->cport.protocol_id;
@@ -255,9 +251,7 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size,
                 cport->bundle = desc->cport.bundle;
 #endif
                 gb_debug("cport_id = %d\n", cport->id);
-                gb_error("=2=%d, %d\n", desc->cport.id, desc->cport.bundle);
             } else {
-                gb_error("=3=%d, %d\n", desc->cport.id, desc->cport.bundle);
                 free_cport(desc->cport.id);
             }
         }

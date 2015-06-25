@@ -1,0 +1,6 @@
+target remote localhost:2341
+monitor reset
+file ../../nuttx-apb2
+restore ../../nuttx-apb2
+set $pc=Reset_Handler
+c

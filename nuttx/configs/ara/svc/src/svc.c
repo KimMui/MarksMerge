@@ -317,6 +317,8 @@ static int svcd_startup(void) {
         goto error2;
     }
 
+    up_udelay(2000000);
+
     /* Set up default routes */
     rc = setup_default_routes(sw);
     if (rc) {

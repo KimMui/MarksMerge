@@ -47,7 +47,7 @@
 #include <nuttx/clock.h>
 
 #include <nuttx/greybus/types.h>
-#include <arch/armv7-m/byteorder.h>
+#include <arch/byteorder.h>
 #include <nuttx/greybus/greybus.h>
 #include <../drivers/greybus/i2s-gb.h>
 

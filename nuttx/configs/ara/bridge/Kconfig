@@ -61,4 +61,11 @@ config FOR_GOOGLE_IO_DEMO
 	depends on ARA_BRIDGE_HAVE_CAMERA && APB_CAMERA
 	default n
 
+config GREYBUS_I2S_DUAL_PORTS
+	bool "Dual I2S routing to APB2"
+	select GREYBUS_I2S_UPSCALE
+	default n
+	---help---
+		Enable the dual I2S CPorts on APB2.
+
 endif

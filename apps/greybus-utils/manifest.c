@@ -236,20 +236,12 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size,
         break;
     case GREYBUS_TYPE_CPORT:
         expected_size += sizeof(struct greybus_descriptor_cport);
-#ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
-        // *.nmfs might have bundle other than 0, we only handle the one with bundle set to 0.
-        if (desc->cport.bundle != 0)
-        	break;
-#endif
         if (desc_size >= expected_size) {
             if (!release) {
-            	cport = alloc_cport();
+                cport = alloc_cport();
                 cport->id = desc->cport.id;
                 cport->protocol = desc->cport.protocol_id;
                 cport->device_id = g_device_id;
-#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
-                cport->bundle = desc->cport.bundle;
-#endif
                 gb_debug("cport_id = %d\n", cport->id);
             } else {
                 free_cport(desc->cport.id);
@@ -412,21 +404,3 @@ int get_manifest_size(void)
 
     return mh ? le16_to_cpu(mh->size) : 0;
 }
-
-#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
-int get_cport_bundle(int cport)
-{
-    struct list_head *iter;
-    struct gb_cport *gb_cport;
-    int    bundle = 0;
-
-    list_foreach(&g_greybus.cports, iter) {
-        gb_cport = list_entry(iter, struct gb_cport, list);
-        if (gb_cport->id == cport) {
-            bundle = gb_cport->bundle;
-        }
-    }
-
-    return bundle;
-}
-#endif

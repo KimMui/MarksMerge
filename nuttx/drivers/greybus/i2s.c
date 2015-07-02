@@ -170,8 +170,6 @@ struct gb_i2s_cport_list_entry {
 #define DATA_SIZE_PER_SAMPLE            2
 
 
-extern int get_cport_bundle(int cport);
-
 #define MAX_AUDIO_CHANNELS			2
 enum gb_mixer_op_type {
     GB_I2S_INSERT_AUDIO_FRAME,
@@ -227,6 +225,11 @@ struct gb_i2s_dev_info {
     struct gb_i2s_info  *info;
 };
 
+struct gb_i2s_cport_bundle_map {
+	int         cport;
+	uint16_t    bundle;
+};
+
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
 struct gb_audio_channel_info {
 	struct gb_i2s_info  *channel_info;
@@ -279,7 +282,6 @@ static struct gb_mixer_info gb_mixer = {
 };
 #endif
 
-
 static struct gb_i2s_dev_info gb_i2s_dev_info_map[] = {
     {
         .bundle_id  = GB_I2S_BUNDLE_0_ID,
@@ -294,6 +296,41 @@ static struct gb_i2s_dev_info gb_i2s_dev_info_map[] = {
     }
 #endif
 };
+
+/* Hard code cport -> bundle so we don't have to hack non-i2s files
+ * that will surely change and cause merge conflicts.
+ * Note that the term 'bundle' in this driver is *wrong* -- that is,
+ * it is not a true bundle as defined by Ara.
+ */
+static struct gb_i2s_cport_bundle_map gb_i2s_cport2bundle[] = {
+    {
+        .cport  = 5,
+        .bundle = 0,
+    },
+    {
+        .cport  = 6,
+        .bundle = 0,
+    },
+    {
+        .cport  = 7,
+        .bundle = 1,
+    },
+    {
+        .cport  = 8,
+        .bundle = 1,
+    },
+};
+
+static int get_cport_bundle(int cport)
+{
+    int i;
+
+    for (i = 0; i < ARRAY_SIZE(gb_i2s_cport2bundle); i++)
+        if (gb_i2s_cport2bundle[i].cport == cport)
+            return gb_i2s_cport2bundle[i].bundle;
+
+    return -1;
+}
 
 static struct gb_i2s_dev_info *gb_i2s_get_dev_info(uint16_t bundle_id)
 {
@@ -2133,11 +2170,7 @@ static int gb_i2s_mgmt_init(unsigned int cport)
     struct gb_i2s_info *info;
     int ret;
 
-#ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
-    dev_info = gb_i2s_get_dev_info(GB_I2S_BUNDLE_0_ID); /* XXX */
-#else
     dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport)); /* XXX */
-#endif
 
     if (!dev_info)
         return -EINVAL;
@@ -2216,12 +2249,8 @@ static void gb_i2s_mgmt_exit(unsigned int cport)
 {
     struct gb_i2s_dev_info *dev_info;
 
-#ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
     // KIMMUI: ??? Is this right?
-    dev_info = gb_i2s_get_dev_info(cport);
-#else
     dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport));
-#endif
 
     if (!dev_info && !dev_info->info)
         return;
@@ -2288,11 +2317,7 @@ static int gb_i2s_cple_init(unsigned int cport, enum gb_i2s_cport_type type)
     struct gb_i2s_dev_info *dev_info;
     struct gb_i2s_cport_list_entry *cple;
 
-#ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
-    dev_info = gb_i2s_get_dev_info(GB_I2S_BUNDLE_0_ID); /* XXX */
-#else
     dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport)); /* XXX */
-#endif
 
     lldbg("cport %d, %x\n", cport, dev_info);
     if (!dev_info || !dev_info->info)
@@ -2338,11 +2363,7 @@ static int gb_i2s_receiver_init(unsigned int cport)
     struct gb_i2s_cport_list_entry *cple;
     struct list_head *iter;
 
-#ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
-    dev_info = gb_i2s_get_dev_info(GB_I2S_BUNDLE_0_ID); /* XXX */
-#else
     dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport)); /* XXX */
-#endif
 
     if (!dev_info || !dev_info->info)
         return -EINVAL;

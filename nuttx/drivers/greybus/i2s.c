@@ -43,10 +43,6 @@
 
 /* TODO:
  *
- * Supports only one Receiver CPort per I2S Bundle because all received
- * audio data goes to the one physical low-level controller.  So if there
- * is a mixer with two I2S connections, say, then use two separate I2S Bundles.
- *
  * For now, a FAST_HANDLER is not used for handling Greybus SEND_DATA
  * requests because the Greybus code on the AP assumes that every Greybus
  * message gets a response.  When the FAST_HANDLER is enabled,
@@ -106,8 +102,10 @@
 
 #define GB_I2S_CPORT_INVALID            (CPORT_MAX + 1)
 
-#define GB_I2S_BUNDLE_0_ID              0
-#define GB_I2S_BUNDLE_0_DEV_ID          0
+#define GB_I2S_STREAM_0_ID              0
+#define GB_I2S_STREAM_0_DEV_ID          0
+#define GB_I2S_STREAM_1_ID              1
+#define GB_I2S_STREAM_1_DEV_ID          1
 
 #define GB_I2S_SAMPLES_PER_MSG_DEFAULT  1
 
@@ -159,8 +157,6 @@ struct gb_i2s_cport_list_entry {
 #endif
 
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
-#define GB_I2S_BUNDLE_1_ID              1
-#define GB_I2S_BUNDLE_1_DEV_ID          1
 
 #define MIXER_I2S_MSG_SIZE				192
 #define MIXER_SAMPLES_PER_FRAME         (MIXER_I2S_MSG_SIZE >> 2) // left and right and 2 bytes sample
@@ -178,7 +174,7 @@ enum gb_mixer_op_type {
 #endif
 
 
-struct gb_i2s_info { /* One per I2S Bundle */
+struct gb_i2s_info { /* One per I2S Stream */
     uint16_t            mgmt_cport;
     uint32_t            flags;
 #ifndef CONFIG_GREYBUS_I2S_DUAL_PORTS
@@ -219,15 +215,15 @@ struct gb_i2s_info { /* One per I2S Bundle */
 };
 
 struct gb_i2s_dev_info {
-    uint16_t            bundle_id;
+    uint16_t            stream_id;
     char                *dev_type;
     unsigned int        dev_id;
     struct gb_i2s_info  *info;
 };
 
-struct gb_i2s_cport_bundle_map {
+struct gb_i2s_cport_stream_map {
 	int         cport;
-	uint16_t    bundle;
+	uint16_t    stream_id;
 };
 
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
@@ -284,60 +280,58 @@ static struct gb_mixer_info gb_mixer = {
 
 static struct gb_i2s_dev_info gb_i2s_dev_info_map[] = {
     {
-        .bundle_id  = GB_I2S_BUNDLE_0_ID,
+        .stream_id  = GB_I2S_STREAM_0_ID,
         .dev_type   = DEVICE_TYPE_I2S_HW,
-        .dev_id     = GB_I2S_BUNDLE_0_DEV_ID,
+        .dev_id     = GB_I2S_STREAM_0_DEV_ID,
     },
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
     {
-        .bundle_id  = GB_I2S_BUNDLE_1_ID,
+        .stream_id  = GB_I2S_STREAM_1_ID,
         .dev_type   = DEVICE_TYPE_I2S_HW,
-        .dev_id     = GB_I2S_BUNDLE_1_DEV_ID,
+        .dev_id     = GB_I2S_STREAM_1_DEV_ID,
     }
 #endif
 };
 
-/* Hard code cport -> bundle so we don't have to hack non-i2s files
+/* Hard code cport -> stream so we don't have to hack non-i2s files
  * that will surely change and cause merge conflicts.
- * Note that the term 'bundle' in this driver is *wrong* -- that is,
- * it is not a true bundle as defined by Ara.
  */
-static struct gb_i2s_cport_bundle_map gb_i2s_cport2bundle[] = {
+static struct gb_i2s_cport_stream_map gb_i2s_cport2stream[] = {
     {
-        .cport  = 5,
-        .bundle = 0,
+        .cport      = 5,
+        .stream_id  = GB_I2S_STREAM_0_ID,
     },
     {
-        .cport  = 6,
-        .bundle = 0,
+        .cport      = 6,
+        .stream_id  = GB_I2S_STREAM_0_ID,
     },
     {
-        .cport  = 7,
-        .bundle = 1,
+        .cport      = 7,
+        .stream_id  = GB_I2S_STREAM_1_ID,
     },
     {
-        .cport  = 8,
-        .bundle = 1,
+        .cport      = 8,
+        .stream_id  = GB_I2S_STREAM_1_ID,
     },
 };
 
-static int get_cport_bundle(int cport)
+static int get_cport_stream(int cport)
 {
     int i;
 
-    for (i = 0; i < ARRAY_SIZE(gb_i2s_cport2bundle); i++)
-        if (gb_i2s_cport2bundle[i].cport == cport)
-            return gb_i2s_cport2bundle[i].bundle;
+    for (i = 0; i < ARRAY_SIZE(gb_i2s_cport2stream); i++)
+        if (gb_i2s_cport2stream[i].cport == cport)
+            return gb_i2s_cport2stream[i].stream_id;
 
     return -1;
 }
 
-static struct gb_i2s_dev_info *gb_i2s_get_dev_info(uint16_t bundle_id)
+static struct gb_i2s_dev_info *gb_i2s_get_dev_info(uint16_t stream_id)
 {
     unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(gb_i2s_dev_info_map); i++)
-        if (gb_i2s_dev_info_map[i].bundle_id == bundle_id)
+        if (gb_i2s_dev_info_map[i].stream_id == stream_id)
             return &gb_i2s_dev_info_map[i];
 
     return NULL;
@@ -2170,7 +2164,7 @@ static int gb_i2s_mgmt_init(unsigned int cport)
     struct gb_i2s_info *info;
     int ret;
 
-    dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport)); /* XXX */
+    dev_info = gb_i2s_get_dev_info(get_cport_stream(cport)); /* XXX */
 
     if (!dev_info)
         return -EINVAL;
@@ -2250,7 +2244,7 @@ static void gb_i2s_mgmt_exit(unsigned int cport)
     struct gb_i2s_dev_info *dev_info;
 
     // KIMMUI: ??? Is this right?
-    dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport));
+    dev_info = gb_i2s_get_dev_info(get_cport_stream(cport));
 
     if (!dev_info && !dev_info->info)
         return;
@@ -2317,7 +2311,7 @@ static int gb_i2s_cple_init(unsigned int cport, enum gb_i2s_cport_type type)
     struct gb_i2s_dev_info *dev_info;
     struct gb_i2s_cport_list_entry *cple;
 
-    dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport)); /* XXX */
+    dev_info = gb_i2s_get_dev_info(get_cport_stream(cport)); /* XXX */
 
     lldbg("cport %d, %x\n", cport, dev_info);
     if (!dev_info || !dev_info->info)
@@ -2363,12 +2357,12 @@ static int gb_i2s_receiver_init(unsigned int cport)
     struct gb_i2s_cport_list_entry *cple;
     struct list_head *iter;
 
-    dev_info = gb_i2s_get_dev_info(get_cport_bundle(cport)); /* XXX */
+    dev_info = gb_i2s_get_dev_info(get_cport_stream(cport)); /* XXX */
 
     if (!dev_info || !dev_info->info)
         return -EINVAL;
 
-    /* Can have only one Receiver CPort in a bundle */
+    /* Can have only one Receiver CPort in a stream */
     list_foreach(&dev_info->info->cport_list, iter) {
         cple = list_entry(iter, struct gb_i2s_cport_list_entry, list);
 

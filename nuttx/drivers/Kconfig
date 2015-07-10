@@ -567,6 +567,7 @@ source drivers/syslog/Kconfig
 
 menuconfig GREYBUS
 	bool "Greybus support"
+	depends on APBRIDGE_GBSIM || GPBRIDGE
 	default n
 
 if GREYBUS

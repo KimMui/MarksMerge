@@ -48,8 +48,8 @@ config GREYBUS_I2S_PHY
 	default n
 	
 	
-config GREYBUS_I2S_UPSCALE
-	bool "I2S upscale support"
+config GREYBUS_I2S_DUAL_PORTS
+	bool "Multiple Audio Streams support"
 	depends on GREYBUS_I2S_PHY
 	default n
 		

@@ -241,6 +241,9 @@ static int identify_descriptor(struct greybus_descriptor *desc, size_t size,
                 cport = alloc_cport();
                 cport->id = desc->cport.id;
                 cport->protocol = desc->cport.protocol_id;
+#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
+                cport->bundle = desc->cport.bundle;
+#endif
                 cport->device_id = g_device_id;
                 gb_debug("cport_id = %d\n", cport->id);
             } else {

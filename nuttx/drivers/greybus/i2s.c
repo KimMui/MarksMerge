@@ -86,6 +86,9 @@
 #endif
 
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
+#ifndef CONFIG_GREYBUS_I2S_UPSCALE
+#define CONFIG_GREYBUS_I2S_UPSCALE
+#endif
 #define USE_THREAD_FOR_I2S_RB
 #endif
 
@@ -93,6 +96,10 @@
 #undef  CONFIG_GREYBUS_I2S_UPSCALE
 #undef CONFIG_GREYBUS_I2S_DUAL_PORTS
 #undef USE_THREAD_FOR_I2S_RB
+#endif
+
+#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
+#include <apps/greybus-utils/manifest.h>
 #endif
 
 #ifdef CONFIG_GREYBUS_I2S_UPSCALE
@@ -106,7 +113,7 @@
 
 #define GB_I2S_CPORT_INVALID            (CPORT_MAX + 1)
 
-#define GB_I2S_BUNDLE_0_ID              0
+#define GB_I2S_BUNDLE_0_ID              1
 #define GB_I2S_BUNDLE_0_DEV_ID          0
 
 #define GB_I2S_SAMPLES_PER_MSG_DEFAULT  1
@@ -159,8 +166,8 @@ struct gb_i2s_cport_list_entry {
 #endif
 
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
-#define GB_I2S_BUNDLE_1_ID              1
-#define GB_I2S_BUNDLE_1_DEV_ID          1
+#define GB_I2S_BUNDLE_1_ID              2
+#define GB_I2S_BUNDLE_1_DEV_ID          0
 
 #define MIXER_I2S_MSG_SIZE				192
 #define MIXER_SAMPLES_PER_FRAME         (MIXER_I2S_MSG_SIZE >> 2) // left and right and 2 bytes sample
@@ -168,9 +175,6 @@ struct gb_i2s_cport_list_entry {
 #define SAMPLES_PER_MESSAGE             8
 #define NUMBER_OF_AUDIO_CHANNELS	    2
 #define DATA_SIZE_PER_SAMPLE            2
-
-
-extern int get_cport_bundle(int cport);
 
 #define MAX_AUDIO_CHANNELS			2
 enum gb_mixer_op_type {
@@ -294,6 +298,24 @@ static struct gb_i2s_dev_info gb_i2s_dev_info_map[] = {
     }
 #endif
 };
+
+#ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
+static int get_cport_bundle(int cport)
+{
+    struct list_head *iter;
+    struct gb_cport *gb_cport;
+    int    bundle = 0;
+
+    list_foreach(get_manifest_cports(), iter) {
+        gb_cport = list_entry(iter, struct gb_cport, list);
+        if (gb_cport->id == cport) {
+            bundle = gb_cport->bundle;
+        }
+    }
+
+    return bundle;
+}
+#endif
 
 static struct gb_i2s_dev_info *gb_i2s_get_dev_info(uint16_t bundle_id)
 {

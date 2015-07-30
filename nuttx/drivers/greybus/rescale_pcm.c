@@ -209,14 +209,13 @@ int upscale_engine_resample_copy(STREAM_HANDLE stream_handle,
         if (p_stream->last_decode_freq == MATCH_FREQ) {
             // No rate conversion required, copy input to output verbatim
             if (*p_input_samples <= *p_output_samples) {
-                memcpy(p_output_sample_buffer, p_input_sample_buffer, *p_input_samples*sizeof(int16_t));
                 *p_output_samples = *p_input_samples;
             }
             else {
                 ret_value = RESCALE_PCM_OVERRUN;
-                memcpy(p_output_sample_buffer, p_input_sample_buffer, *p_output_samples*sizeof(int16_t));
                 *p_input_samples = *p_output_samples;
             }
+            memcpy(p_output_sample_buffer, p_input_sample_buffer, *p_output_samples*sizeof(int16_t)*(p_stream->match_resample.channels));
         }
         else {
             // Adjust the output index to a negative number in case the last number of channels was incomplete

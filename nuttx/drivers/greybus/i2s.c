@@ -83,6 +83,9 @@
 
 #ifdef CONFIG_GREYBUS_I2S_DUAL_PORTS
 #define USE_THREAD_FOR_I2S_RB
+#ifndef CONFIG_GREYBUS_I2S_UPSCALE
+#define CONFIG_GREYBUS_I2S_UPSCALE
+#endif
 #endif
 
 #if 0
@@ -90,6 +93,7 @@
 #undef CONFIG_GREYBUS_I2S_DUAL_PORTS
 #undef USE_THREAD_FOR_I2S_RB
 #endif
+
 
 #ifdef CONFIG_GREYBUS_I2S_UPSCALE
 #include "rescale_pcm.h"
@@ -1022,7 +1026,7 @@ static int gb_mixer_mix_audio_channels(
     	src[channel_index] = (uint16_t*)ring_buf_get_head(src_rb[channel_index]);
     }
 
-    int sample_count  = mixing_data_length >> 2;
+    int sample_count  = mixing_data_length >> 1;
     for (sample_index = 0; sample_index < sample_count; sample_index++)
     {
     	uint32_t output_sample = 0;

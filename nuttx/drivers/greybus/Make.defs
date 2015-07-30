@@ -73,7 +73,7 @@ ifeq ($(CONFIG_GREYBUS_SPI_PHY),y)
 CSRCS += spi.c
 endif
 
-ifeq ($(CONFIG_GREYBUS_I2S_UPSCALE),y)
+ifeq ($(CONFIG_GREYBUS_I2S_DUAL_PORTS),y)
 CSRCS += rescale_pcm.c
 endif
 

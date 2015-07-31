@@ -578,7 +578,7 @@ static void *gb_i2s_mixer_rb_thread(void *data)
 {
 	int ret = 0;
 
-	lldbg("started(id=%d).\n", pthread_self());
+	// lldbg("started(id=%d).\n", pthread_self());
 
 	while (!gb_mixer.rx_thread_terminate)
 	{
@@ -602,7 +602,7 @@ static void *gb_i2s_mixer_rb_thread(void *data)
         gb_mixer.flags |= GB_I2S_FLAG_RX_STARTED;
 	}
 
-	lldbg("ended!!!\n");
+	// lldbg("ended!!!\n");
 
 	sem_post(&gb_mixer.rx_stop_sem);
 
@@ -822,7 +822,7 @@ static int gb_i2s_prepare_receiver(struct gb_i2s_info *info)
                (info->samples_per_message * 1000000)) +
                GB_I2S_RX_RING_BUF_PAD;
 
-#if 1
+#if 0
     lldbg(" input_size=%d, input_fr=%d, input_dl=%d, input_spm=%d\n",
     		info->msg_data_size, info->sample_frequency, info->delay, info->samples_per_message);
     lldbg(" entries=%d, output_size=%d, output_fr=%d, output_dl=%d, output_spm=%d\n",
@@ -1411,22 +1411,27 @@ static int gb_i2s_shutdown_receiver(struct gb_i2s_info *info)
         	gb_mixer.flags &= ~GB_I2S_FLAG_RX_PREPARED;
         	gb_mixer.flags &= ~GB_I2S_FLAG_RX_STARTED;
 
+#if 0
       		lldbg("rbCnt=%d, id=%d, undrun=%d(%d), mixingCnt=%d.\n",
       			  info->rx_rb_count, info->next_rx_sample, info->rx_rb_underrun_count,
       			  gb_mixer.rx_rb_underrun_count, info->rx_rb_mixing_count);
-
+#endif
       		gb_mixer.rx_rb_count = 0;
         	gb_mixer.rx_rb_underrun_count = 0;
         	gb_mixer.rx_rb_total_count = 0;
         } else {
+#if 0
       		lldbg("rbCnt=%d, id=%d, undrun=%d(%d), mixingCnt=%d.\n",
       			  info->rx_rb_count, info->next_rx_sample, info->rx_rb_underrun_count,
       			  gb_mixer.rx_rb_underrun_count, info->rx_rb_mixing_count);
+#endif
         }
 
-        lldbg("closing audio channel %d.\n", channel_id);
+#if 0
+  		lldbg("closing audio channel %d.\n", channel_id);
+#endif
 
-    	gb_mixer.audio_channels[channel_id].rx_rb = NULL;
+  		gb_mixer.audio_channels[channel_id].rx_rb = NULL;
     	gb_mixer.audio_channels[channel_id].channel_info = NULL;
 
     	info->rx_rb_mixing_count = 0;
